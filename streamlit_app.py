@@ -240,11 +240,34 @@ CHART_THEME = dict(
 )
 COLORS = ["#5c6fff", "#e8f24a", "#ff5c8a", "#4ade80", "#f97316", "#a78bfa"]
 
-
 # ── Data ─────────────────────────────────────────────────────────────────────
 @st.cache_data
 def load_data():
-    df = pd.read_csv('data/Atlantic_France.csv')
+    import os
+    
+    # Try multiple possible paths
+    possible_paths = [
+        # Path 1: Standard relative path
+        'data/Atlantic_France.csv',
+        # Path 2: From script directory
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'Atlantic_France.csv'),
+        # Path 3: From current working directory
+        os.path.abspath('data/Atlantic_France.csv'),
+    ]
+    
+    csv_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            csv_path = path
+            break
+    
+    if csv_path is None:
+        # If file not found, show helpful error
+        st.error("❌ Data file not found!")
+        st.info(f"Searched in:\n" + "\n".join([f"- {p}" for p in possible_paths]))
+        st.stop()
+    
+    df = pd.read_csv(csv_path)
     df['date'] = pd.to_datetime(df['date'])
     df['duration_min'] = df['duration_ms'] / 60000
     df['album_type'] = df['album_type'].str.lower().str.strip()
